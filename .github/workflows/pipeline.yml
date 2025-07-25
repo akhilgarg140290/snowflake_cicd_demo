@@ -41,4 +41,4 @@ jobs:
         SCHEMA: ${{ vars.SNOWFLAKE_SCHEMA }}
       run:
         snowsql -a "$SNOWFLAKE_ACCOUNT" -u "$USER" -p "$PASSWORD" -q "SELECT CURRENT_DATE;"
-      run: bash cicd/deploy.sh
+        bash cicd/deploy.sh
