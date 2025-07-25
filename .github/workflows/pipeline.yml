@@ -1,52 +1,79 @@
-name: Deploy to Snowflake
+name: Execute SQL Scripts in Snowflake
 
 on:
   push:
     branches:
-      - main
       - dev
-
+      - main
 jobs:
-  deploy:
+  deploy-sql:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set Environment Variables
-      id: setenv
-      run: |
-        if [[ "${{ github.ref_name }}" == "main" ]]; then
-          echo "BRANCH_SUFFIX=_PROD" >> $GITHUB_ENV
-        elif [[ "${{ github.ref_name }}" == "dev" ]]; then
-          echo "BRANCH_SUFFIX=_DEV" >> $GITHUB_ENV
-        else
-          echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
-        fi
-    - name: Upgrade oscrypto
-      run: pip install --upgrade oscrypto
-      
-    - name: Install OpenSSL (for SnowSQL)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libssl3
-        sudo ln -s /lib/x86_64-linux-gnu/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.1.1 || true
-        sudo ln -s /lib/x86_64-linux-gnu/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.1.1 || true
-    - name: Install SnowSQL
-      run: |
-        curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.9-linux_x86_64.bash
-        SNOWSQL_DEST=~/bin SNOWSQL_LOGIN_SHELL=~/.profile bash snowsql-1.2.9-linux_x86_64.bash
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    - name: Run Deployment Script
-      env:
-        SNOWSQL_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
-        SNOWSQL_USER: ${{ vars.SNOWFLAKE_USER }}
-        SNOWSQL_PWD: ${{ vars.SNOWFLAKE_PASSWORD }}
-        ROLE: ${{ vars.SNOWFLAKE_ROLE }}
-        WAREHOUSE: ${{ vars.SNOWFLAKE_WH }}
-        DATABASE: ${{ vars.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
-        SCHEMA: ${{ vars.SNOWFLAKE_SCHEMA }}
-      run:
-        ~/bin/snowsql -q  "SELECT CURRENT_DATE;"
-       # bash cicd/deploy.sh
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install snowflake-connector-python
+      - name: Set Environment Variables
+        id: setenv
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "BRANCH_SUFFIX=_PROD" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "BRANCH_SUFFIX=_DEV" >> $GITHUB_ENV
+          else
+            echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
+          fi
+      - name: Execute SQL Scripts in dev/ Folder
+        env:
+          SNOWFLAKE_USER: ${{ vars.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ vars.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_ROLE: ${{ vars.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_WAREHOUSE: ${{ vars.SNOWFLAKE_WH }}
+          SNOWFLAKE_DATABASE: ${{ vars.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
+          SNOWFLAKE_SCHEMA: ${{ vars.SNOWFLAKE_SCHEMA }}
+        run: |
+          echo "Running SQL scripts from dev folder..."
+          python -c "
+
+          import os
+          import snowflake.connector
+
+          conn = snowflake.connector.connect(
+              user=os.environ['SNOWFLAKE_USER'],
+              password=os.environ['SNOWFLAKE_PASSWORD'],
+              account=os.environ['SNOWFLAKE_ACCOUNT'],
+              warehouse=os.environ['SNOWFLAKE_WAREHOUSE'],
+              database=os.environ['SNOWFLAKE_DATABASE'],
+              schema=os.environ['SNOWFLAKE_SCHEMA']
+          )
+
+          cursor = conn.cursor()
+
+          script_files = [
+              'dev/create_tables.sql',
+              'dev/stage_sales_data.sql',
+              'dev/transform_sales_data.sql'
+          ]
+
+          for script in script_files:
+              print(f'🔹 Executing {script}...')
+              with open(script, 'r') as file:
+                  sql_commands = file.read()
+                  for command in sql_commands.strip().split(';'):
+                      if command.strip():
+                          cursor.execute(command)
+                          print(f'✅ Ran: {command[:60]}...')
+
+          cursor.close()
+          conn.close()
+          print('🎉 All SQL scripts executed successfully.')
