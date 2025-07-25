@@ -3,7 +3,7 @@ set -e
 
 echo "Deploying to Snowflake with snowsql..."
 
-snowsql -a $SNOWFLAKE_ACCOUNT \
+~/bin/snowsql -a $SNOWFLAKE_ACCOUNT \
   -u $USER \
   -p $PASSWORD \
   -r $ROLE \
@@ -12,7 +12,7 @@ snowsql -a $SNOWFLAKE_ACCOUNT \
   -s $SCHEMA \
   -f dev/create_tables.sql
 
-snowsql -a $SNOWFLAKE_ACCOUNT \
+~/bin/snowsql -a $SNOWFLAKE_ACCOUNT \
   -u $USER \
   -p $PASSWORD \
   -r $ROLE \
@@ -21,7 +21,7 @@ snowsql -a $SNOWFLAKE_ACCOUNT \
   -s $SCHEMA \
   -f dev/stage_sales_data.sql
 
-snowsql -a $SNOWFLAKE_ACCOUNT \
+~/bin/snowsql -a $SNOWFLAKE_ACCOUNT \
   -u $USER \
   -p $PASSWORD \
   -r $ROLE \
