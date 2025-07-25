@@ -34,11 +34,11 @@ jobs:
       env:
         SNOWFLAKE_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
         USER: ${{ vars.SNOWFLAKE_USER }}
-        PASSWORD: ${{ vars.SNOWFLAKE_PASSWORD }}
+        SNOWSQL_PWD: ${{ vars.SNOWFLAKE_PASSWORD }}
         ROLE: ${{ vars.SNOWFLAKE_ROLE }}
         WAREHOUSE: ${{ vars.SNOWFLAKE_WH }}
         DATABASE: ${{ vars.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
         SCHEMA: ${{ vars.SNOWFLAKE_SCHEMA }}
       run:
-        ~/bin/snowsql -a "$SNOWFLAKE_ACCOUNT" -u "$USER" -p "$PASSWORD" -q "SELECT CURRENT_DATE;"
+        ~/bin/snowsql -q  "SELECT CURRENT_DATE;"
        # bash cicd/deploy.sh
