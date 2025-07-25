@@ -8,34 +8,38 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Snowflake
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+    - name: Checkout Repo
+      uses: actions/checkout@v3
 
-      - name: Install SnowSQL
-        run: |
-          pip install snowflake-cli-labs
+    - name: Set Environment Variables
+      id: setenv
+      run: |
+        if [[ "${{ github.ref_name }}" == "main" ]]; then
+          echo "BRANCH_SUFFIX=_PROD" >> $GITHUB_ENV
+        elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+          echo "BRANCH_SUFFIX=_DEV" >> $GITHUB_ENV
+        else
+          echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
+        fi
 
-      - name: Set Environment Variables
-        id: setenv
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "BRANCH_SUFFIX=_PROD" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == "dev" ]]; then
-            echo "BRANCH_SUFFIX=_DEV" >> $GITHUB_ENV
-          else
-            echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
-          fi
+    - name: Install SnowSQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl
+        curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.27-linux_x86_64.bash
+        bash snowsql-1.2.27-linux_x86_64.bash -y
+        echo "$HOME/.snowsql" >> $GITHUB_PATH
 
-      - name: Run Deployment Script
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          USER: ${{ secrets.SNOWFLAKE_USER }}
-          ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-          WAREHOUSE: ${{ secrets.SNOWFLAKE_WH }}
-          DATABASE: ${{ secrets.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
-          SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
-        run: bash cicd/deploy.sh
+    - name: Run Deployment Script
+      env:
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        USER: ${{ secrets.SNOWFLAKE_USER }}
+        PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+        WAREHOUSE: ${{ secrets.SNOWFLAKE_WH }}
+        DATABASE: ${{ secrets.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
+        SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+      run: bash cicd/deploy.sh
