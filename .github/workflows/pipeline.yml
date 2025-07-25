@@ -24,7 +24,10 @@ jobs:
         else
           echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
         fi
-
+    - name: Install OpenSSL (for SnowSQL)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl1.1 || sudo apt-get install -y libssl1.0.0
     - name: Install SnowSQL
       run: |
         curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.9-linux_x86_64.bash
