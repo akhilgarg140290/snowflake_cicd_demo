@@ -60,7 +60,7 @@ jobs:
           cursor = conn.cursor()
 
           script_files = [
-              'dev/create_tables.sql',
+              'dev/create_table.sql',
               'dev/stage_sales_data.sql',
               'dev/transform_sales_data.sql'
           ]
