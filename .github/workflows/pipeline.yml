@@ -39,4 +39,6 @@ jobs:
         WAREHOUSE: ${{ vars.SNOWFLAKE_WH }}
         DATABASE: ${{ vars.SNOWFLAKE_DB }}${{ env.BRANCH_SUFFIX }}
         SCHEMA: ${{ vars.SNOWFLAKE_SCHEMA }}
+      run:
+        snowsql -a "$SNOWFLAKE_ACCOUNT" -u "$USER" -p "$PASSWORD" -q "SELECT CURRENT_DATE;"
       run: bash cicd/deploy.sh
