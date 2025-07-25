@@ -24,6 +24,9 @@ jobs:
         else
           echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
         fi
+    - name: Upgrade oscrypto
+      run: pip install --upgrade oscrypto
+      
     - name: Install OpenSSL (for SnowSQL)
       run: |
         sudo apt-get update
