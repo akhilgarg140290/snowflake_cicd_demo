@@ -69,7 +69,7 @@ jobs:
           )
 
           cursor = conn.cursor()
-          cursor.execute(f\"USE WAREHOUSE {os.getenv('SNOWFLAKE_WAREHOUSE')}\")
+          cursor.execute(f\"USE WAREHOUSE {os.environ['SNOWFLAKE_WAREHOUSE']}\")
           for script in script_files:
               print(f'🔹 Executing {script}...')
               with open(script, 'r') as file:
