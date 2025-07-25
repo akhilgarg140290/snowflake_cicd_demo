@@ -55,7 +55,7 @@ jobs:
           import snowflake.connector
           folder = os.getenv('FOLDER')
           script_files = sorted(glob.glob(f'{folder}/*.sql'))
-
+          echo "Checking if files exists..."
           if not script_files:
            print(f'No SQL files found in {folder}/')
            exit(0)
@@ -67,8 +67,9 @@ jobs:
               database=os.environ['SNOWFLAKE_DATABASE'],
               schema=os.environ['SNOWFLAKE_SCHEMA']
           )
-
+          echo "Initiate Connection..."
           cursor = conn.cursor()
+          echo "Set Warehouse..."
           cursor.execute(f\"USE WAREHOUSE {os.environ['SNOWFLAKE_WAREHOUSE']}\")
           for script in script_files:
               print(f'🔹 Executing {script}...')
