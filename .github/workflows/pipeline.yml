@@ -2,6 +2,8 @@ name: Execute SQL Scripts in Snowflake
 
 on:
   push:
+    paths:
+      - '**.sql'
     branches:
       - dev
       - main
@@ -27,10 +29,13 @@ jobs:
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "BRANCH_SUFFIX=_PROD" >> $GITHUB_ENV
+            echo "FOLDER=prod" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "BRANCH_SUFFIX=_DEV" >> $GITHUB_ENV
+            echo "FOLDER=dev" >> $GITHUB_ENV
           else
             echo "BRANCH_SUFFIX=" >> $GITHUB_ENV
+            echo "FOLDER=unknown" >> $GITHUB_ENV
           fi
       - name: Execute SQL Scripts in dev/ Folder
         env:
@@ -46,8 +51,14 @@ jobs:
           python -c "
 
           import os
+          import glob
           import snowflake.connector
+          folder = os.getenv('FOLDER')
+          script_files = sorted(glob.glob(f'{folder}/*.sql'))
 
+          if not script_files:
+           print(f'No SQL files found in {folder}/')
+           exit(0)
           conn = snowflake.connector.connect(
               user=os.environ['SNOWFLAKE_USER'],
               password=os.environ['SNOWFLAKE_PASSWORD'],
@@ -58,13 +69,7 @@ jobs:
           )
 
           cursor = conn.cursor()
-
-          script_files = [
-              'dev/create_table.sql',
-              'dev/stage_sales_data.sql',
-              'dev/transform_sales_data.sql'
-          ]
-
+          cursor.execute(f\"USE WAREHOUSE {os.getenv('SNOWFLAKE_WAREHOUSE')}\")
           for script in script_files:
               print(f'🔹 Executing {script}...')
               with open(script, 'r') as file:
