@@ -76,4 +76,6 @@ jobs:
 
           cursor.close()
           conn.close()
-          print('🎉 All SQL scripts executed successfully.')
+          print('🎉 All SQL scripts executed successfully.') 
+          "
+          
